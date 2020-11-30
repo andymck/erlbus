@@ -71,16 +71,16 @@ t_broadcast(_Config) ->
 
   ebus_ps:broadcast(
     ?MODULE, <<"topic1">>,
-    ebus_broadcast:new(<<"topic1">>, <<"fastlaned">>, #{})
+    erlbus_broadcast:new(<<"topic1">>, <<"fastlaned">>, #{})
   ),
 
-  Fastlaned = ebus_message:new(<<"topic1">>, <<"fastlaned">>, #{}),
+  Fastlaned = erlbus_message:new(<<"topic1">>, <<"fastlaned">>, #{}),
   {fastlaned, #{ebus_t := broadcast}} = ebus_proc:wait_for_msg(),
   [Fastlaned, Fastlaned] = ebus_proc:messages(FastlanePid),
   [] = ebus_proc:messages(self()),
   [#{ebus_t := broadcast}] = ebus_proc:messages(OtherSubscriber),
 
-  Intercepted = ebus_broadcast:new(<<"topic1">>, <<"intercepted">>, #{}),
+  Intercepted = erlbus_broadcast:new(<<"topic1">>, <<"intercepted">>, #{}),
   ebus_ps:broadcast(?MODULE, <<"topic1">>, Intercepted),
 
   Intercepted = ebus_proc:wait_for_msg(5000),
@@ -89,7 +89,7 @@ t_broadcast(_Config) ->
 
   ebus_ps:broadcast_from(
     ?MODULE, self(), <<"topic1">>,
-    ebus_broadcast:new(<<"topic1">>, <<"other">>, #{})
+    erlbus_broadcast:new(<<"topic1">>, <<"other">>, #{})
   ),
 
   {fastlaned, #{event := <<"other">>, ebus_t := broadcast}} =

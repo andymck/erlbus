@@ -1,4 +1,4 @@
--module(ebus_message).
+-module(erlbus_reply).
 
 %% API
 -export([new/0, new/1, new/2, new/3, new/4]).
@@ -8,33 +8,33 @@
 %%% Type definitions
 %%%===================================================================
 
-%% @type message() =
+%% @type reply() =
 %% #{
 %%   topic   => binary() | nil,
-%%   event   => binary() | nil,
+%%   status  => atom(),
 %%   payload => term(),
 %%   ref     => binary() | nil,
-%%   ebus_t  => message
+%%   ebus_t  => reply
 %% }.
 %%
-%% Defines a message dispatched over transport to channels and vice-versa.
+%% Defines a reply sent from channels to transports.
 %% The message format requires the following keys:
 %% <ul>
 %% <li>`topic': The binary topic or `topic:subtopic` pair namespace,
 %% for example `<<"messages">>', `<<"messages:123">>'.</li>
-%% <li>`event': The binary event name, for example `<<"ebus_join">>'.</li>
+%% <li>`status': The reply status as an atom.</li>
 %% <li>`payload': The message payload.</li>
 %% <li>`ref': The unique binary ref.</li>
 %% </ul>
--type message() :: #{
+-type reply() :: #{
   topic   => binary() | nil,
-  event   => binary() | nil,
+  status  => atom(),
   payload => term(),
   ref     => binary() | nil,
-  ebus_t  => message
+  ebus_t  => reply
 }.
 
--export_type([message/0]).
+-export_type([reply/0]).
 
 %%%===================================================================
 %%% API
@@ -48,34 +48,33 @@ new() ->
 new(Topic) ->
   new(Topic, nil).
 
-%% @equiv new(Topic, Event, nil)
-new(Topic, Event) ->
-  new(Topic, Event, nil).
+%% @equiv new(Topic, Status, nil)
+new(Topic, Status) ->
+  new(Topic, Status, nil).
 
-%% @equiv new(Topic, Event, Payload, nil)
-new(Topic, Event, Payload) ->
-  new(Topic, Event, Payload, nil).
+%% @equiv new(Topic, Status, Payload, nil)
+new(Topic, Status, Payload) ->
+  new(Topic, Status, Payload, nil).
 
--spec new(binary() | nil, binary() | nil, term(), binary() | nil) -> message().
-new(Topic, Event, Payload, Ref)
-    when (is_binary(Topic) orelse Topic =:= nil)
-    andalso (is_binary(Event) orelse Event =:= nil) ->
+-spec new(binary() | nil, atom(), term(), binary() | nil) -> reply().
+new(Topic, Status, Payload, Ref)
+    when (is_binary(Topic) orelse Topic =:= nil) andalso is_atom(Status) ->
   #{
     topic   => Topic,
-    event   => Event,
+    status  => Status,
     payload => Payload,
     ref     => Ref,
-    ebus_t  => message
+    ebus_t  => reply
   }.
 
--spec from_map(map()) -> message().
+-spec from_map(map()) -> reply().
 from_map(Map) ->
   BinKey = fun(K, V, Acc) -> Acc#{ebus_common:to_bin(K) => V} end,
   BinMap = maps:fold(BinKey, #{}, Map),
   #{
     topic   => maps:get(<<"topic">>, BinMap, nil),
-    event   => maps:get(<<"event">>, BinMap, nil),
+    status  => ebus_common:to_atom(maps:get(<<"status">>, BinMap, nil)),
     payload => maps:get(<<"payload">>, BinMap, nil),
     ref     => maps:get(<<"ref">>, BinMap, nil),
-    ebus_t  => message
+    ebus_t  => reply
   }.
