@@ -31,12 +31,12 @@ all() -> [
 ].
 
 init_per_suite(Config) ->
-  ebus:start(),
-  PubSub = application:get_env(ebus, pubsub, []),
+  erlbus:start(),
+  PubSub = application:get_env(erlbus, pubsub, []),
   Config ++ PubSub.
 
 end_per_suite(Config) ->
-  ebus:stop(),
+  erlbus:stop(),
   Config.
 
 %%%===================================================================

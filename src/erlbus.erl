@@ -361,7 +361,7 @@ stop(_State) -> ok.
 %% @doc Returns the registered `ebus' server name.
 -spec server() -> atom().
 server() ->
-  PubSub = application:get_env(ebus, pubsub, []),
+  PubSub = application:get_env(erlbus, pubsub, []),
   ebus_common:keyfind(name, PubSub, default_ps_server()).
 
 %% @doc Returns default `ebus' server name: `ebus_ps'.

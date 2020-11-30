@@ -19,12 +19,12 @@
 all() -> [t_pubsub, t_dispatch].
 
 init_per_suite(Config) ->
-  ebus:start(),
+  erlbus:start(),
   Nodes = start_slaves([a, b, c, d]),
   [{nodes, Nodes} | Config].
 
 end_per_suite(Config) ->
-  ebus:stop(),
+  erlbus:stop(),
   stop_slaves([a, b, c, d]),
   Config.
 
@@ -38,22 +38,22 @@ t_pubsub(Config) ->
   #{nodes := Nodes} = ConfigMap,
 
   % check topics
-  [] = ebus:local_topics(),
-  [] = ebus:topics(),
+  [] = erlbus:local_topics(),
+  [] = erlbus:topics(),
 
   % subscribe local process
-  ok = ebus:sub(self(), <<"T1">>),
+  ok = erlbus:sub(self(), <<"T1">>),
 
   % spawn and subscribe remote process
   NodePidL = spawn_remote_pids(Nodes),
   sub_remote_pids(NodePidL, <<"T1">>),
 
   % check topics
-  [<<"T1">>] = ebus:local_topics(),
-  [<<"T1">>] = ebus:topics(),
+  [<<"T1">>] = erlbus:local_topics(),
+  [<<"T1">>] = erlbus:topics(),
 
   % publish message
-  ebus:pub(<<"T1">>, <<"hello">>),
+  erlbus:pub(<<"T1">>, <<"hello">>),
   timer:sleep(1000),
 
   % check local process received message
@@ -65,7 +65,7 @@ t_pubsub(Config) ->
   L1 = r_process_messages(NodePidL),
 
   % publish message
-  ebus:pub_from(self(), <<"T1">>, <<"hello">>),
+  erlbus:pub_from(self(), <<"T1">>, <<"hello">>),
   timer:sleep(1000),
 
   % check local process didn't receive message
@@ -77,15 +77,15 @@ t_pubsub(Config) ->
 
   % check subscribers
   Self = self(),
-  [Self] = ebus:local_subscribers(<<"T1">>),
-  5 = length(ebus:subscribers(<<"T1">>)),
+  [Self] = erlbus:local_subscribers(<<"T1">>),
+  5 = length(erlbus:subscribers(<<"T1">>)),
 
   % unsubscribe remote process
   [P1 | _] = NodePidL,
   unsub_remote_pids([P1], <<"T1">>),
 
   % publish message
-  ebus:pub(<<"T1">>, <<"hello">>),
+  erlbus:pub(<<"T1">>, <<"hello">>),
   timer:sleep(1000),
 
   % check
@@ -98,14 +98,14 @@ t_pubsub(Config) ->
   L3 = r_process_messages(NodePidL),
 
   % check subscribers
-  [Self] = ebus:local_subscribers(<<"T1">>),
-  4 = length(ebus:subscribers(<<"T1">>)),
+  [Self] = erlbus:local_subscribers(<<"T1">>),
+  4 = length(erlbus:subscribers(<<"T1">>)),
 
   % subscribe local process
-  ok = ebus:sub(self(), <<"T2">>),
+  ok = erlbus:sub(self(), <<"T2">>),
 
   % publish message
-  ebus:pub(<<"T2">>, <<"foo">>),
+  erlbus:pub(<<"T2">>, <<"foo">>),
   timer:sleep(1000),
 
   % check
@@ -114,13 +114,13 @@ t_pubsub(Config) ->
   L3 = r_process_messages(NodePidL),
 
   % check topics
-  [<<"T1">>, <<"T2">>] = ebus:local_topics(),
-  [<<"T1">>, <<"T2">>] = ebus:topics(),
+  [<<"T1">>, <<"T2">>] = erlbus:local_topics(),
+  [<<"T1">>, <<"T2">>] = erlbus:topics(),
 
   % kill remote pid and check
   {LastNode, LastPid} = lists:last(NodePidL),
   rpc:call(LastNode, erlang, exit, [LastPid, kill]),
-  3 = length(ebus:subscribers(<<"T1">>)),
+  3 = length(erlbus:subscribers(<<"T1">>)),
 
   ct:print("\e[1;1m t_pubsub: \e[0m\e[32m[OK] \e[0m"),
   ok.
@@ -131,22 +131,22 @@ t_dispatch(Config) ->
   #{nodes := Nodes} = ConfigMap,
 
   % check dispatch
-  try ebus:dispatch("foo", <<"M1">>)
+  try erlbus:dispatch("foo", <<"M1">>)
   catch _:no_subscribers_available -> ok
   end,
 
   % subscribe local process
-  ok = ebus:sub(self(), "foo"),
+  ok = erlbus:sub(self(), "foo"),
 
   % spawn and subscribe remote process
   NodePidL = spawn_remote_pids(Nodes),
   sub_remote_pids(NodePidL, "foo"),
 
-  1 = length(ebus:local_subscribers("foo")),
-  5 = length(ebus:subscribers("foo")),
+  1 = length(erlbus:local_subscribers("foo")),
+  5 = length(erlbus:subscribers("foo")),
 
   % dispatch
-  ok = ebus:dispatch("foo", <<"M1">>),
+  ok = erlbus:dispatch("foo", <<"M1">>),
   timer:sleep(1000),
 
   % check local process received message
@@ -159,7 +159,7 @@ t_dispatch(Config) ->
 
   % dispatch global with default dispatch_fun
   lists:foreach(fun(_) ->
-    ok = ebus:dispatch("foo", <<"M2">>, [{scope, global}])
+    ok = erlbus:dispatch("foo", <<"M2">>, [{scope, global}])
   end, lists:seq(1, 500)),
   timer:sleep(1500),
 
@@ -170,11 +170,11 @@ t_dispatch(Config) ->
   lists:foreach(fun(L) -> true = length(L) > 0 end, L2),
 
   % dispatch fun
-  [S1 | _] = ebus:subscribers("foo"),
+  [S1 | _] = erlbus:subscribers("foo"),
   MsgsS1 = length(ebus_proc:r_messages(S1)),
   Fun = fun([H | _]) -> H end,
   lists:foreach(fun(_) ->
-    ok = ebus:dispatch(
+    ok = erlbus:dispatch(
       "foo", <<"M3">>,
       [{scope, global}, {dispatch_fun, Fun}])
   end, lists:seq(1, 100)),
