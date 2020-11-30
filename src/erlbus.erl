@@ -342,14 +342,14 @@ dispatch(Server, Topic, Message, Opts) ->
 
 %% @doc Starts `ebus' application.
 -spec start() -> {ok, _} | {error, term()}.
-start() -> application:ensure_all_started(ebus).
+start() -> application:ensure_all_started(erlbus).
 
 %% @doc Stops `ebus' application.
 -spec stop() -> ok | {error, term()}.
-stop() -> application:stop(ebus).
+stop() -> application:stop(erlbus).
 
 %% @hidden
-start(_StartType, _StartArgs) -> ebus_sup:start_link().
+start(_StartType, _StartArgs) -> erlbus_sup:start_link().
 
 %% @hidden
 stop(_State) -> ok.
